@@ -54,6 +54,32 @@ public class TreeHasher {
         return new Pair<>(new Bytes(p), new Bytes(v));
     }
 
+    public boolean isKeyRelatedWithLeafData(Bytes key, Bytes leafData) {
+        return !isKeyUnrelatedWithLeafData(key, leafData);
+    }
+
+    public boolean isKeyUnrelatedWithLeafData(Bytes key, Bytes leafData) {
+        if (leafData == null || leafData.getValue().length == 0) {
+            return true;
+        }
+        Bytes path = this.path(key);
+        return isPathUnrelatedWithLeafData(path, leafData);
+    }
+
+    public boolean isPathUnrelatedWithLeafData(Bytes path, Bytes leafData) {
+        boolean unrelated = false;
+        if (leafData == null || leafData.getValue().length == 0) {
+            unrelated = true;
+        } else {
+            Pair<Bytes, Bytes> p = parseLeaf(leafData);
+
+            if (!Bytes.equals(p.getItem1(), path)) {
+                unrelated = true;
+            }
+        }
+        return unrelated;
+    }
+
     public int pathSize() {
         return this.hasher.size();
     }
@@ -66,11 +92,12 @@ public class TreeHasher {
         return LEAF_PREFIX.length + pathSize() + this.hasher.size();
     }
 
+    public Hasher getHasher() {
+        return hasher;
+    }
+
     public int hasherSize() {
         return this.hasher.size();
     }
 
-    public Hasher getHasher() {
-        return hasher;
-    }
 }

@@ -94,6 +94,26 @@ public class SparseMerkleTree {
         return p.getItem1();
     }
 
+    public SparseMerkleProof proveMembershipForRoot(Bytes key, Bytes root) throws MembershipProofException {
+        Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, false);
+        if (this.treeHasher.isKeyUnrelatedWithLeafData(key, p.getItem2())) {
+            throw new MembershipProofException(String.format("Key(%1$s) is unrelated with leaf data(%1$s)",
+                    HexUtils.byteArrayToHex(key.getValue()),
+                    p.getItem2() == null ? null : HexUtils.byteArrayToHex(p.getItem2().getValue())));
+        }
+        return p.getItem1();
+    }
+
+    public SparseMerkleProof proveNonMembershipForRoot(Bytes key, Bytes root) throws NonMembershipProofException {
+        Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, false);
+        if (this.treeHasher.isKeyRelatedWithLeafData(key, p.getItem2())) {
+            throw new NonMembershipProofException(String.format("Key(%1$s) is related with leaf data(%1$s)",
+                    HexUtils.byteArrayToHex(key.getValue()),
+                    p.getItem2() == null ? null : HexUtils.byteArrayToHex(p.getItem2().getValue())));
+        }
+        return p.getItem1();
+    }
+
     public SparseMerkleProof proveUpdatableForRoot(Bytes key, Bytes root) {
         Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, true);
         return p.getItem1();
@@ -109,6 +129,10 @@ public class SparseMerkleTree {
 
     public Pair<SparseMerkleProof, Bytes> proveForRootAndGetLeafData(Bytes key, Bytes root) {
         return doProveForRoot(key, root, false);
+    }
+
+    public Pair<SparseMerkleProof, Bytes> proveForRootAndGetLeafData(byte[] key, Bytes root) {
+        return proveForRootAndGetLeafData(new Bytes(key), root);
     }
 
     private Pair<SparseMerkleProof, Bytes> doProveForRoot(Bytes key, Bytes root, boolean isUpdatable) {
@@ -375,6 +399,18 @@ public class SparseMerkleTree {
 
     public static class KeyAlreadyEmptyException extends RuntimeException {
         public KeyAlreadyEmptyException(String message) {
+            super(message);
+        }
+    }
+
+    public static class MembershipProofException extends Exception {
+        public MembershipProofException(String message) {
+            super(message);
+        }
+    }
+
+    public static class NonMembershipProofException extends MembershipProofException {
+        public NonMembershipProofException(String message) {
             super(message);
         }
     }

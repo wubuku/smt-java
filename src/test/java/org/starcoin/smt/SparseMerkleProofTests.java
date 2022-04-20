@@ -76,5 +76,10 @@ public class SparseMerkleProofTests {
         proof = smt.prove("testKey5".getBytes(StandardCharsets.UTF_8));
         Assertions.assertTrue(SparseMerkleProof.verifyProof(proof, newRoot, "testKey5".getBytes(StandardCharsets.UTF_8), polyTxExistsValue, smt.getTreeHasher().getHasher()));
 
+        // test prove non-membership and membership
+        Assertions.assertThrows(SparseMerkleTree.NonMembershipProofException.class,
+                () -> smt.proveNonMembershipForRoot(new Bytes("testKey5".getBytes(StandardCharsets.UTF_8)), smt.getRoot()));
+        Assertions.assertThrows(SparseMerkleTree.MembershipProofException.class,
+                () -> smt.proveMembershipForRoot(new Bytes("bar".getBytes(StandardCharsets.UTF_8)), smt.getRoot()));
     }
 }
