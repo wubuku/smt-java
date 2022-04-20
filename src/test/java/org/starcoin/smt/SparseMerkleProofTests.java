@@ -81,5 +81,11 @@ public class SparseMerkleProofTests {
                 () -> smt.proveNonMembershipForRoot(new Bytes("testKey5".getBytes(StandardCharsets.UTF_8)), smt.getRoot()));
         Assertions.assertThrows(SparseMerkleTree.MembershipProofException.class,
                 () -> smt.proveMembershipForRoot(new Bytes("bar".getBytes(StandardCharsets.UTF_8)), smt.getRoot()));
+//        try {
+//            smt.proveNonMembershipForRoot(new Bytes("testKey5".getBytes(StandardCharsets.UTF_8)), smt.getRoot());
+//            smt.proveMembershipForRoot(new Bytes("bar".getBytes(StandardCharsets.UTF_8)), smt.getRoot());
+//        } catch (SparseMerkleTree.MembershipProofException e) {
+//            e.printStackTrace();
+//        }
     }
 }

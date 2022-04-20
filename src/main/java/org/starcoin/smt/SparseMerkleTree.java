@@ -97,7 +97,7 @@ public class SparseMerkleTree {
     public SparseMerkleProof proveMembershipForRoot(Bytes key, Bytes root) throws MembershipProofException {
         Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, false);
         if (this.treeHasher.isKeyUnrelatedWithLeafData(key, p.getItem2())) {
-            throw new MembershipProofException(String.format("Key(%1$s) is unrelated with leaf data(%1$s)",
+            throw new MembershipProofException(String.format("Key(%1$s) is unrelated with leaf data(%2$s)",
                     HexUtils.byteArrayToHex(key.getValue()),
                     p.getItem2() == null ? null : HexUtils.byteArrayToHex(p.getItem2().getValue())));
         }
@@ -107,7 +107,7 @@ public class SparseMerkleTree {
     public SparseMerkleProof proveNonMembershipForRoot(Bytes key, Bytes root) throws NonMembershipProofException {
         Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, false);
         if (this.treeHasher.isKeyRelatedWithLeafData(key, p.getItem2())) {
-            throw new NonMembershipProofException(String.format("Key(%1$s) is related with leaf data(%1$s)",
+            throw new NonMembershipProofException(String.format("Key(%1$s) is related with leaf data(%2$s)",
                     HexUtils.byteArrayToHex(key.getValue()),
                     p.getItem2() == null ? null : HexUtils.byteArrayToHex(p.getItem2().getValue())));
         }
@@ -331,13 +331,13 @@ public class SparseMerkleTree {
     public Bytes deleteWithSideNodes(Bytes path, Bytes[] sideNodes, Bytes[] pathNodes, Bytes oldLeafData) {
         if (Bytes.equals(pathNodes[0], this.treeHasher.placeholder())) {
             // This key is already empty as it is a placeholder; return an error.
-            throw new KeyAlreadyEmptyException("key is already empty as pathNodes[0] is a placeholder");
+            throw new KeyAlreadyEmptyException("Key is already empty as pathNodes[0] is a placeholder");
         }
         Pair<Bytes, Bytes> leafPair = this.treeHasher.parseLeaf(oldLeafData);
         Bytes actualPath = leafPair.getItem1();
         if (!Bytes.equals(path, actualPath)) {
             // This key is already empty as a different key was found its place; return an error.
-            throw new KeyAlreadyEmptyException(String.format("key is already empty as a different key was found its place: %1$s", HexUtils.byteArrayToHex(actualPath.getValue())));
+            throw new KeyAlreadyEmptyException(String.format("Key is already empty as a different key was found on actual path: %1$s", HexUtils.byteArrayToHex(actualPath.getValue())));
         }
         // All nodes above the deleted leaf are now orphaned
         for (Bytes node : pathNodes) {
