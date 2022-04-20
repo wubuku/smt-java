@@ -3,8 +3,8 @@ package org.starcoin.smt;
 import java.util.Arrays;
 
 public class TreeHasher {
-    public static final byte[] LEAF_PREFIX = new byte[]{0};
-    public static final byte[] NODE_PREFIX = new byte[]{1};
+    private static final byte[] LEAF_PREFIX = new byte[]{0};
+    private static final byte[] NODE_PREFIX = new byte[]{1};
 
     private final Hasher hasher;
     private final Bytes zeroValue;
@@ -60,5 +60,13 @@ public class TreeHasher {
 
     public Bytes placeholder() {
         return this.zeroValue;
+    }
+
+    public int leafDataSize() {
+        return LEAF_PREFIX.length + pathSize() + this.hasher.size();
+    }
+
+    public int hasherSize() {
+        return this.hasher.size();
     }
 }

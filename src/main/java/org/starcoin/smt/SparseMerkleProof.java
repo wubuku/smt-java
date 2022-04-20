@@ -57,6 +57,37 @@ public class SparseMerkleProof {
         this.siblingData = siblingData;
     }
 
+    /**
+     * Do a basic sanity check on the proof, so that a malicious proof cannot
+     * cause the verifier to fatally exit (e.g. due to an index out-of-range
+     * error) or cause a CPU DoS attack.
+     *
+     * @param th TreeHasher
+     * @return
+     */
+    public boolean sanityCheck(TreeHasher th) {
+        // Check that the number of supplied sidenodes does not exceed the maximum possible.
+        if (this.sideNodes.length > th.pathSize() * 8 ||
+                // Check that leaf data for non-membership proofs is the correct size.
+                (this.nonMembershipLeafData != null && this.nonMembershipLeafData.getValue().length != th.leafDataSize())) {
+            return false;
+        }
+
+        // Check that all supplied side nodes are the correct size.
+        for (Bytes v : this.sideNodes) {
+            if (v.getValue().length != th.hasherSize()) {
+                return false;
+            }
+        }
+
+        // Check that the sibling data hashes to the first side node if not nil
+        if (this.siblingData == null || this.sideNodes.length == 0) {
+            return true;
+        }
+        Bytes siblingHash = th.digest(this.siblingData);
+        return Bytes.equals(this.sideNodes[0], siblingHash);
+    }
+
     @Override
     public String toString() {
         return "SparseMerkleProof{" +
