@@ -5,11 +5,10 @@ import java.util.function.Consumer;
 
 public class SparseMerkleTree {
     public static final int RIGHT = 1;
-
+    public static final Bytes DEFAULT_VALUE = new Bytes(new byte[]{});
     private final TreeHasher treeHasher;
     private final Map<Bytes, Bytes> nodes;
     private final SmtValueStore values;
-    private final Bytes defaultValue = new Bytes(new byte[]{});
     private Bytes root;
 
     public SparseMerkleTree(Map<Bytes, Bytes> nodes, Map<Bytes, Bytes> values, Hasher hasher, Option... options) {
@@ -42,7 +41,6 @@ public class SparseMerkleTree {
         return this.treeHasher.pathSize() * 8;
     }
 
-
     public Bytes update(byte[] key, byte[] value) {
         return update(new Bytes(key), new Bytes(value));
     }
@@ -61,7 +59,7 @@ public class SparseMerkleTree {
         Bytes oldLeafData = sideNodesResult.getLeafData();
 
         Bytes newRoot;
-        if (Bytes.equals(value, defaultValue)) {
+        if (Bytes.equals(value, DEFAULT_VALUE)) {
             // Delete operation.
             try {
                 newRoot = this.deleteWithSideNodes(path, sideNodes, pathNodes, oldLeafData);

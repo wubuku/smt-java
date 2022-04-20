@@ -69,4 +69,8 @@ public class TreeHasher {
     public int hasherSize() {
         return this.hasher.size();
     }
+
+    public Hasher getHasher() {
+        return hasher;
+    }
 }

@@ -1,7 +1,10 @@
 package org.starcoin.smt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import static org.starcoin.smt.SparseMerkleTree.DEFAULT_VALUE;
 import static org.starcoin.smt.SparseMerkleTree.RIGHT;
 
 /**
@@ -147,6 +150,71 @@ public class SparseMerkleProof {
         // 	return nil, err
         // }
         return currentHash;
+    }
+
+
+    public static boolean verifyProof(SparseMerkleProof proof, Bytes root, byte[] key, byte[] value, Hasher hasher) {
+        return verifyProofWithUpdates(proof, root, new Bytes(key), new Bytes(value), hasher).getItem1();
+    }
+
+    public static boolean verifyProof(SparseMerkleProof proof, Bytes root, Bytes key, Bytes value, Hasher hasher) {
+        return verifyProofWithUpdates(proof, root, key, value, hasher).getItem1();
+    }
+
+    private static Pair<Boolean, List<Pair<Bytes, Bytes>>> verifyProofWithUpdates(SparseMerkleProof proof, Bytes root, Bytes key, Bytes value, Hasher hasher) {
+        TreeHasher th = new TreeHasher(hasher);
+        Bytes path = th.path(key);
+        if (!proof.sanityCheck(th)) {
+            return new Pair<>(false, null);
+        }
+        List<Pair<Bytes, Bytes>> updates = new ArrayList<>();
+
+        // Determine what the leaf hash should be.
+        Bytes currentHash;
+        Bytes currentData;
+        if (value == null || Bytes.equals(value, DEFAULT_VALUE)) { // Non-membership proof.
+            if (proof.nonMembershipLeafData == null) { // Leaf is a placeholder value.
+                currentHash = th.placeholder();
+            } else { // Leaf is an unrelated leaf.
+                Pair<Bytes, Bytes> p = th.parseLeaf(proof.nonMembershipLeafData);
+                Bytes actualPath = p.getItem1();
+                Bytes valueHash = p.getItem2();
+                if (Bytes.equals(actualPath, path)) {
+                    // This is not an unrelated leaf; non-membership proof failed.
+                    return new Pair<>(false, null);
+                }
+                p = th.digestLeaf(actualPath, valueHash);
+                currentHash = p.getItem1();
+                currentData = p.getItem2();
+                Pair<Bytes, Bytes> update = new Pair<>(currentHash, currentData);
+                updates.add(update);
+            }
+        } else { // Membership proof.
+            Bytes valueHash = th.digest(value);
+            Pair<Bytes, Bytes> p = th.digestLeaf(path, valueHash);
+            currentHash = p.getItem1();
+            currentData = p.getItem2();
+            Pair<Bytes, Bytes> update = new Pair<>(currentHash, currentData);
+            updates.add(update);
+        }
+
+        // Recompute root.
+        for (int i = 0; i < proof.sideNodes.length; i++) {
+            //byte[] node = new byte[th.pathSize()];
+            Bytes node = new Bytes(Arrays.copyOf(proof.sideNodes[i].getValue(), th.pathSize()));
+            Pair<Bytes, Bytes> p;
+            if (ByteUtils.getBitAtFromMSB(path.getValue(), proof.sideNodes.length - 1 - i) == RIGHT) {
+                p = th.digestNode(node, currentHash);
+            } else {
+                p = th.digestNode(currentHash, node);
+            }
+            currentHash = p.getItem1();
+            currentData = p.getItem2();
+            Pair<Bytes, Bytes> update = new Pair<>(currentHash, currentData);
+            updates.add(update);
+        }
+
+        return new Pair<>(Bytes.equals(currentHash, root), updates);
     }
 
     public Bytes[] getSideNodes() {
