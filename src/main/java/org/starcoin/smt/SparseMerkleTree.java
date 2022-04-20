@@ -42,6 +42,11 @@ public class SparseMerkleTree {
         return this.treeHasher.pathSize() * 8;
     }
 
+
+    public Bytes update(byte[] key, byte[] value) {
+        return update(new Bytes(key), new Bytes(value));
+    }
+
     public Bytes update(Bytes key, Bytes value) {
         Bytes newRoot = this.updateForRoot(key, value, this.getRoot());
         this.root = newRoot;
@@ -72,6 +77,70 @@ public class SparseMerkleTree {
             newRoot = this.updateWithSideNodes(path, value, sideNodes, pathNodes, oldLeafData);
         }
         return newRoot;
+    }
+
+    public SparseMerkleProof prove(Bytes key) {
+        return proveForRoot(key, this.root);
+    }
+
+    public SparseMerkleProof prove(byte[] key) {
+        return proveForRoot(new Bytes(key), this.root);
+    }
+
+    public SparseMerkleProof proveUpdatable(Bytes key) {
+        return proveUpdatableForRoot(key, this.root);
+    }
+
+    public SparseMerkleProof proveForRoot(Bytes key, Bytes root) {
+        Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, false);
+        return p.getItem1();
+    }
+
+    public SparseMerkleProof proveUpdatableForRoot(Bytes key, Bytes root) {
+        Pair<SparseMerkleProof, Bytes> p = doProveForRoot(key, root, true);
+        return p.getItem1();
+    }
+
+    public Pair<SparseMerkleProof, Bytes> proveAndGetLeafData(Bytes key) {
+        return proveForRootAndGetLeafData(key, this.root);
+    }
+
+    public Pair<SparseMerkleProof, Bytes> proveAndGetLeafData(byte[] key) {
+        return proveAndGetLeafData(new Bytes(key));
+    }
+
+    public Pair<SparseMerkleProof, Bytes> proveForRootAndGetLeafData(Bytes key, Bytes root) {
+        return doProveForRoot(key, root, false);
+    }
+
+    private Pair<SparseMerkleProof, Bytes> doProveForRoot(Bytes key, Bytes root, boolean isUpdatable) {
+        Bytes path = this.treeHasher.path(key);
+        SideNodesResult sideNodesResult = this.sideNodesForRoot(path, root, isUpdatable);
+        Bytes[] sideNodes = sideNodesResult.getSideNodes();
+        Bytes[] pathNodes = sideNodesResult.getPathNodes();
+        Bytes leafData = sideNodesResult.getLeafData();
+        Bytes siblingData = sideNodesResult.getSiblingData();
+        List<Bytes> nonEmptySideNodes = new ArrayList<>();
+        for (Bytes v : sideNodes) {
+            if (v != null) {
+                nonEmptySideNodes.add(v);
+            }
+        }
+
+        // Deal with non-membership proofs. If the leaf hash is the placeholder
+        // value, we do not need to add anything else to the proof.
+        Bytes nonMembershipLeafData = null;
+        if (!Bytes.equals(pathNodes[0], this.treeHasher.placeholder())) {
+            Pair<Bytes, Bytes> p = this.treeHasher.parseLeaf(leafData);
+            Bytes actualPath = p.getItem1();
+            if (!Bytes.equals(actualPath, path)) {
+                // This is a non-membership proof that involves showing a different leaf.
+                // Add the leaf data to the proof.
+                nonMembershipLeafData = leafData;
+            }
+        }
+        SparseMerkleProof proof = new SparseMerkleProof(nonEmptySideNodes.toArray(new Bytes[0]), nonMembershipLeafData, siblingData);
+        return new Pair<>(proof, leafData);
     }
 
     /**

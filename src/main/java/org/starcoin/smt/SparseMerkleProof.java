@@ -2,6 +2,8 @@ package org.starcoin.smt;
 
 import java.util.Arrays;
 
+import static org.starcoin.smt.SparseMerkleTree.RIGHT;
+
 /**
  * SparseMerkleProof is a Merkle proof for an element in a SparseMerkleTree.
  */
@@ -31,6 +33,120 @@ public class SparseMerkleProof {
         this.sideNodes = sideNodes;
         this.nonMembershipLeafData = nonMembershipLeafData;
         this.siblingData = siblingData;
+    }
+
+
+    public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
+        return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, oldLeafData);
+    }
+
+    public static Bytes updateRoot(TreeHasher th, Bytes key, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
+        return updateRootByPath(th, th.path(key), value, sideNodes, oldLeafData);
+    }
+
+    public static Bytes updateRootByPath(TreeHasher th, Bytes path, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
+        Bytes pathNode0;      //pathNodes[0]
+        if (oldLeafData == null || oldLeafData.getValue().length == 0) {
+            pathNode0 = th.placeholder();
+        } else {
+            pathNode0 = th.digest(oldLeafData);
+        }
+        Bytes valueHash = th.digest(value);
+        Pair<Bytes, Bytes> leafPair = th.digestLeaf(path, valueHash);
+        Bytes currentHash = leafPair.getItem1();
+        Bytes currentData = leafPair.getItem2();
+        // if err := smt.nodes.Set(currentHash, currentData); err != nil {
+        // 	return nil, err
+        // }
+        currentData = currentHash;
+
+        // If the leaf node that sibling nodes lead to has a different actual path
+        // than the leaf node being updated, we need to create an intermediate node
+        // with this leaf node and the new leaf node as children.
+        //
+        // First, get the number of bits that the paths of the two leaf nodes share
+        // in common as a prefix.
+        int depth = th.pathSize() * 8;
+        int commonPrefixCount;
+        Bytes oldValueHash = null;
+        if (oldLeafData == null || oldLeafData.getValue().length == 0) {
+            commonPrefixCount = depth;
+        } else {
+            Bytes actualPath;
+            Pair<Bytes, Bytes> p = th.parseLeaf(oldLeafData);
+            actualPath = p.getItem1();
+            oldValueHash = p.getItem2();
+            commonPrefixCount = ByteUtils.countCommonPrefix(path.getValue(), actualPath.getValue());
+        }
+        if (commonPrefixCount != depth) {
+            Pair<Bytes, Bytes> p;
+            if (ByteUtils.getBitAtFromMSB(path.getValue(), commonPrefixCount) == RIGHT) {
+                p = th.digestNode(pathNode0, currentData);
+            } else {
+                p = th.digestNode(currentData, pathNode0);
+            }
+            currentHash = p.getItem1();
+            currentData = p.getItem2();
+            // err := smt.nodes.Set(currentHash, currentData)
+            // if err != nil {
+            // 	return nil, err
+            // }
+            currentData = currentHash;
+        } else if (oldValueHash != null) {
+            // // Short-circuit if the same value is being set
+            // if bytes.Equal(oldValueHash, valueHash) {
+            // 	return smt.root, nil
+            // }
+            // // If an old leaf exists, remove it
+            // if err := smt.nodes.Delete(pathNodes[0]); err != nil {
+            // 	return nil, err
+            // }
+            // if err := smt.values.Delete(path); err != nil {
+            // 	return nil, err
+            // }
+        }
+        // // All remaining path nodes are orphaned
+        // for i := 1; i < len(pathNodes); i++ {
+        // 	if err := smt.nodes.Delete(pathNodes[i]); err != nil {
+        // 		return nil, err
+        // 	}
+        // }
+        // The offset from the bottom of the tree to the start of the side nodes.
+        // Note: i-offsetOfSideNodes is the index into sideNodes[]
+        int offsetOfSideNodes = depth - sideNodes.length;
+        for (int i = 0; i < depth; i++) {
+            Bytes sideNode;
+            if (i - offsetOfSideNodes < 0 || sideNodes[i - offsetOfSideNodes] == null) {
+                if (commonPrefixCount != depth && commonPrefixCount > depth - 1 - i) {
+                    // If there are no side nodes at this height, but the number of
+                    // bits that the paths of the two leaf nodes share in common is
+                    // greater than this depth, then we need to build up the tree
+                    // to this depth with placeholder values at siblings.
+                    sideNode = th.placeholder();
+                } else {
+                    continue;
+                }
+            } else {
+                sideNode = sideNodes[i - offsetOfSideNodes];
+            }
+            Pair<Bytes, Bytes> p;
+            if (ByteUtils.getBitAtFromMSB(path.getValue(), depth - 1 - i) == RIGHT) {
+                p = th.digestNode(sideNode, currentData);
+            } else {
+                p = th.digestNode(currentData, sideNode);
+            }
+            currentHash = p.getItem1();
+            currentData = p.getItem2();
+            // err := smt.nodes.Set(currentHash, currentData)
+            // if err != nil {
+            // 	return nil, err
+            // }
+            currentData = currentHash;
+        }
+        // if err := smt.values.Set(path, value); err != nil {
+        // 	return nil, err
+        // }
+        return currentHash;
     }
 
     public Bytes[] getSideNodes() {
