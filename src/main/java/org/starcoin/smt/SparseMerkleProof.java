@@ -3,6 +3,7 @@ package org.starcoin.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.starcoin.smt.SparseMerkleTree.DEFAULT_VALUE;
 import static org.starcoin.smt.SparseMerkleTree.RIGHT;
@@ -32,17 +33,18 @@ public class SparseMerkleProof {
      */
     private Bytes siblingData;
 
+    public SparseMerkleProof() {
+    }
+
     public SparseMerkleProof(Bytes[] sideNodes, Bytes nonMembershipLeafData, Bytes siblingData) {
         this.sideNodes = sideNodes;
         this.nonMembershipLeafData = nonMembershipLeafData;
         this.siblingData = siblingData;
     }
 
-
     public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
         return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, new Bytes(oldLeafData));
     }
-
 
     public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, oldLeafData);
@@ -54,6 +56,10 @@ public class SparseMerkleProof {
 
     public static Bytes updateRootByPath(TreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
         return updateRootByPath(th, new Bytes(path), new Bytes(value), sideNodes, new Bytes(oldLeafData));
+    }
+
+    public static Bytes updateRootByPath(TreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
+        return updateRootByPath(th, new Bytes(path), new Bytes(value), sideNodes, oldLeafData);
     }
 
     public static Bytes updateRootByPath(TreeHasher th, Bytes path, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
@@ -80,14 +86,14 @@ public class SparseMerkleProof {
         // in common as a prefix.
         int depth = th.pathSize() * 8;
         int commonPrefixCount;
-        Bytes oldValueHash = null;
+        //Bytes oldValueHash = null;
         if (oldLeafData == null || oldLeafData.getValue().length == 0) {
             commonPrefixCount = depth;
         } else {
             Bytes actualPath;
             Pair<Bytes, Bytes> p = th.parseLeaf(oldLeafData);
             actualPath = p.getItem1();
-            oldValueHash = p.getItem2();
+            //oldValueHash = p.getItem2();
             commonPrefixCount = ByteUtils.countCommonPrefix(path.getValue(), actualPath.getValue());
         }
         if (commonPrefixCount != depth) {
@@ -98,25 +104,25 @@ public class SparseMerkleProof {
                 p = th.digestNode(currentData, pathNode0);
             }
             currentHash = p.getItem1();
-            currentData = p.getItem2();
+            //currentData = p.getItem2();
             // err := smt.nodes.Set(currentHash, currentData)
             // if err != nil {
             // 	return nil, err
             // }
             currentData = currentHash;
-        } else if (oldValueHash != null) {
-            // // Short-circuit if the same value is being set
-            // if bytes.Equal(oldValueHash, valueHash) {
-            // 	return smt.root, nil
-            // }
-            // // If an old leaf exists, remove it
-            // if err := smt.nodes.Delete(pathNodes[0]); err != nil {
-            // 	return nil, err
-            // }
-            // if err := smt.values.Delete(path); err != nil {
-            // 	return nil, err
-            // }
-        }
+        } //else if (oldValueHash != null) {
+        // // Short-circuit if the same value is being set
+        // if bytes.Equal(oldValueHash, valueHash) {
+        // 	return smt.root, nil
+        // }
+        // // If an old leaf exists, remove it
+        // if err := smt.nodes.Delete(pathNodes[0]); err != nil {
+        // 	return nil, err
+        // }
+        // if err := smt.values.Delete(path); err != nil {
+        // 	return nil, err
+        // }
+        //}
         // // All remaining path nodes are orphaned
         // for i := 1; i < len(pathNodes); i++ {
         // 	if err := smt.nodes.Delete(pathNodes[i]); err != nil {
@@ -148,7 +154,7 @@ public class SparseMerkleProof {
                 p = th.digestNode(currentData, sideNode);
             }
             currentHash = p.getItem1();
-            currentData = p.getItem2();
+            // currentData = p.getItem2();
             // err := smt.nodes.Set(currentHash, currentData)
             // if err != nil {
             // 	return nil, err
@@ -288,5 +294,20 @@ public class SparseMerkleProof {
                 ", nonMembershipLeafData=" + nonMembershipLeafData +
                 ", siblingData=" + siblingData +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SparseMerkleProof proof = (SparseMerkleProof) o;
+        return Arrays.equals(sideNodes, proof.sideNodes) && Objects.equals(nonMembershipLeafData, proof.nonMembershipLeafData) && Objects.equals(siblingData, proof.siblingData);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(nonMembershipLeafData, siblingData);
+        result = 31 * result + Arrays.hashCode(sideNodes);
+        return result;
     }
 }
