@@ -17,13 +17,23 @@ public final class Bytes implements Comparable<Bytes> {
         return x == y;
     }
 
-    public static Bytes[] reverseByteArrays(Bytes[] arrays) {
-        for (int left = 0, right = arrays.length - 1; left < right; left = left + 1, right = right - 1) {
-            Bytes t = arrays[left];
-            arrays[left] = arrays[right];
-            arrays[right] = t;
+    public static Bytes[] reverseBytesArray(Bytes[] bytesArray) {
+        for (int left = 0, right = bytesArray.length - 1; left < right; left = left + 1, right = right - 1) {
+            Bytes t = bytesArray[left];
+            bytesArray[left] = bytesArray[right];
+            bytesArray[right] = t;
         }
-        return arrays;
+        return bytesArray;
+    }
+
+    public static Bytes[] toBytesArray(byte[][] arrays) {
+        if (arrays == null)
+            return null;
+        Bytes[] bytesArray = new Bytes[arrays.length];
+        for (int i = 0; i < arrays.length; i++) {
+            bytesArray[i] = new Bytes(arrays[i]);
+        }
+        return bytesArray;
     }
 
     public static boolean equals(Bytes x, Bytes y) {

@@ -39,12 +39,21 @@ public class SparseMerkleProof {
     }
 
 
+    public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
+        return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, new Bytes(oldLeafData));
+    }
+
+
     public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, oldLeafData);
     }
 
     public static Bytes updateRoot(TreeHasher th, Bytes key, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRootByPath(th, th.path(key), value, sideNodes, oldLeafData);
+    }
+
+    public static Bytes updateRootByPath(TreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
+        return updateRootByPath(th, new Bytes(path), new Bytes(value), sideNodes, new Bytes(oldLeafData));
     }
 
     public static Bytes updateRootByPath(TreeHasher th, Bytes path, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {

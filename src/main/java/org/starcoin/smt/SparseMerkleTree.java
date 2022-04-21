@@ -233,8 +233,8 @@ public class SparseMerkleTree {
                 throw new NoSuchElementException(String.format("Side node: %1$s", HexUtils.byteArrayToHex(sideNode.getValue())));
             }
         }
-        return new SideNodesResult(Bytes.reverseByteArrays(sideNodes.toArray(new Bytes[0])),
-                Bytes.reverseByteArrays(pathNodes.toArray(new Bytes[0])), currentData, siblingData);
+        return new SideNodesResult(Bytes.reverseBytesArray(sideNodes.toArray(new Bytes[0])),
+                Bytes.reverseBytesArray(pathNodes.toArray(new Bytes[0])), currentData, siblingData);
     }
 
     private Bytes updateWithSideNodes(Bytes path, Bytes value, Bytes[] sideNodes, Bytes[] pathNodes, Bytes oldLeafData) {
