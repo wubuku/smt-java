@@ -400,6 +400,42 @@ public class SparseMerkleTree {
         return this.update(key, DEFAULT_VALUE);
     }
 
+
+    /**
+     * Get gets the value of a key from the tree.
+     *
+     * @param key
+     * @return
+     */
+    public Bytes get(Bytes key) {
+        // Get tree's root
+        Bytes root = this.getRoot();
+        if (Bytes.equals(root, this.treeHasher.placeholder())) {
+            // The tree is empty, return the default value.
+            return DEFAULT_VALUE;
+        }
+        Bytes path = this.treeHasher.path(key);
+        Bytes value = null;
+        if (this.values.isImmutable()) {
+            throw new UnsupportedOperationException("Not implemented, this SMT values can only getForValueHash");
+        } else {
+            value = values.get(path);
+        }
+        return value != null ? value : DEFAULT_VALUE;
+    }
+
+    /**
+     * Has returns true if the value at the given key is non-default, false
+     * otherwise.
+     *
+     * @param key
+     * @return
+     */
+    public boolean has(Bytes key) {
+        Bytes val = get(key);
+        return val != null && !Bytes.equals(DEFAULT_VALUE, val);
+    }
+
     /**
      * Option is a function that configures SMT.
      */
