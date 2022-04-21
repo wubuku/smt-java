@@ -1,6 +1,5 @@
 package org.starcoin.smt;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
