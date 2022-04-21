@@ -30,13 +30,12 @@ public class BytesTests {
     }
 
     @Test
-    public void testReverseByteArrays() {
+    public void testReverseBytesArray() {
         byte[] bs_0 = new byte[]{1, 2, 3, 5, 8, 9, 10, 11};
         byte[] bs_1 = new byte[]{11, 10, 9, 8, 5, 3, 2, 1};
         byte[] bs_2 = new byte[]{1, 2, 3, 5, 8, 9, 9, 11};
-        byte[][] r = ByteUtils.reverseByteArrays(new byte[][]{bs_0, bs_1, bs_2});
-        Assertions.assertEquals(new Bytes(bs_0), new Bytes(r[2]));
-        Assertions.assertEquals(new Bytes(bs_2), new Bytes(r[0]));
+        Bytes[]  r = Bytes.reverseBytesArray(new Bytes[]{new Bytes(bs_0), new Bytes( bs_1), new Bytes( bs_2)});
+        Assertions.assertEquals(new Bytes(bs_0), r[2]);
+        Assertions.assertEquals(new Bytes(bs_2), r[0]);
     }
-
 }
