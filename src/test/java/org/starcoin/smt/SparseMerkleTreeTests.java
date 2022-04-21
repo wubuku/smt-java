@@ -1,5 +1,6 @@
 package org.starcoin.smt;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -26,10 +27,17 @@ public class SparseMerkleTreeTests {
         System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
         smt.update(new Bytes("testKey3".getBytes(StandardCharsets.UTF_8)), new Bytes(polyTxExistsValue));
         System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
-        smt.update(new Bytes("testKey4".getBytes(StandardCharsets.UTF_8)), new Bytes(polyTxExistsValue));
+        // ///////////////
+        smt.delete(new Bytes("testKey4".getBytes(StandardCharsets.UTF_8)));
         System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
+        Bytes rootAfterTestKey4Updated = smt.update(new Bytes("testKey4".getBytes(StandardCharsets.UTF_8)), new Bytes(polyTxExistsValue));
+        System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
+        // ///////////////
         smt.update(new Bytes("testKey5".getBytes(StandardCharsets.UTF_8)), new Bytes(polyTxExistsValue));
         System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
+        Bytes rootAfterTestKey5Deleted =  smt.delete(new Bytes("testKey5".getBytes(StandardCharsets.UTF_8)));
+        System.out.println(HexUtils.byteArrayToHex(smt.getRoot().getValue()));
+        Assertions.assertEquals(rootAfterTestKey4Updated, rootAfterTestKey5Deleted);
     }
 
 }

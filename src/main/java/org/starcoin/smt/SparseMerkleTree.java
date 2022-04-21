@@ -328,7 +328,7 @@ public class SparseMerkleTree {
         return currentHash;
     }
 
-    public Bytes deleteWithSideNodes(Bytes path, Bytes[] sideNodes, Bytes[] pathNodes, Bytes oldLeafData) {
+    private Bytes deleteWithSideNodes(Bytes path, Bytes[] sideNodes, Bytes[] pathNodes, Bytes oldLeafData) {
         if (Bytes.equals(pathNodes[0], this.treeHasher.placeholder())) {
             // This key is already empty as it is a placeholder; return an error.
             throw new KeyAlreadyEmptyException("Key is already empty as pathNodes[0] is a placeholder");
@@ -390,6 +390,15 @@ public class SparseMerkleTree {
         return currentHash;
     }
 
+    /**
+     * Delete deletes a value from tree. It returns the new root of the tree.
+     *
+     * @param key
+     * @return
+     */
+    public Bytes delete(Bytes key) {
+        return this.update(key, DEFAULT_VALUE);
+    }
 
     /**
      * Option is a function that configures SMT.
