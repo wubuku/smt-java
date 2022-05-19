@@ -69,7 +69,7 @@ public class SparseMerkleProof {
         } else {
             pathNode0 = th.digest(oldLeafData);
         }
-        Bytes valueHash = th.digest(value);
+        Bytes valueHash = th.valueHash(value);
         Pair<Bytes, Bytes> leafPair = th.digestLeaf(path, valueHash);
         Bytes currentHash = leafPair.getItem1();
         Bytes currentData = leafPair.getItem2();
@@ -217,7 +217,7 @@ public class SparseMerkleProof {
                 updates.add(update);
             }
         } else { // Membership proof.
-            Bytes valueHash = th.digest(value);
+            Bytes valueHash = th.valueHash(value);
             Pair<Bytes, Bytes> p = th.digestLeaf(path, valueHash);
             currentHash = p.getItem1();
             currentData = p.getItem2();

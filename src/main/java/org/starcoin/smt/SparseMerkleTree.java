@@ -242,7 +242,7 @@ public class SparseMerkleTree {
     }
 
     private Bytes updateWithSideNodes(Bytes path, Bytes value, Bytes[] sideNodes, Bytes[] pathNodes, Bytes oldLeafData) {
-        Bytes valueHash = this.treeHasher.digest(value);
+        Bytes valueHash = this.treeHasher.valueHash(value);
         Bytes currentHash, currentData;
         Pair<Bytes, Bytes> leafPair = this.treeHasher.digestLeaf(path, valueHash);
         currentHash = leafPair.getItem1();

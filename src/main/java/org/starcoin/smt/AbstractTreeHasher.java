@@ -56,6 +56,8 @@ public abstract class AbstractTreeHasher {
 
     public abstract Bytes path(Bytes key);
 
+    public abstract Bytes valueHash(Bytes value);
+
     public abstract Pair<Bytes, Bytes> digestLeaf(Bytes path, Bytes leafData);
 
     public abstract Pair<Bytes, Bytes> parseLeaf(Bytes data);

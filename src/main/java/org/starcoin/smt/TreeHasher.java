@@ -18,6 +18,11 @@ public class TreeHasher extends AbstractTreeHasher {
     }
 
     @Override
+    public Bytes valueHash(Bytes value) {
+        return this.digest(value);
+    }
+
+    @Override
     public Pair<Bytes, Bytes> digestLeaf(Bytes path, Bytes leafData) {
         Bytes value = new Bytes(ByteUtils.concat(LEAF_PREFIX, path.getValue(), leafData.getValue()));
         Bytes sum = this.hasher.hash(value);
