@@ -52,4 +52,5 @@ public class ByteUtilsTests {
         Assertions.assertEquals(new Bytes(bs_0), new Bytes(r[2]));
         Assertions.assertEquals(new Bytes(bs_2), new Bytes(r[0]));
     }
+
 }

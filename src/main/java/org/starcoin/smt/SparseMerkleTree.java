@@ -6,13 +6,17 @@ import java.util.function.Consumer;
 public class SparseMerkleTree {
     public static final int RIGHT = 1;
     public static final Bytes DEFAULT_VALUE = new Bytes(new byte[]{});
-    private final TreeHasher treeHasher;
+    private final AbstractTreeHasher treeHasher;
     private final Map<Bytes, Bytes> nodes;
     private final SmtValueStore values;
     private Bytes root;
 
     public SparseMerkleTree(Map<Bytes, Bytes> nodes, Map<Bytes, Bytes> values, Hasher hasher, Option... options) {
-        this.treeHasher = new TreeHasher(hasher);
+        this(nodes, values, new TreeHasher(hasher), options);
+    }
+
+    public SparseMerkleTree(Map<Bytes, Bytes> nodes, Map<Bytes, Bytes> values, AbstractTreeHasher treeHasher, Option[] options) {
+        this.treeHasher = treeHasher;
         this.nodes = nodes;
         this.values = SmtValueStore.asSmtValueStore(values);
         for (Option option : options) {
@@ -21,7 +25,7 @@ public class SparseMerkleTree {
         this.root = this.treeHasher.placeholder();
     }
 
-    public TreeHasher getTreeHasher() {
+    public AbstractTreeHasher getTreeHasher() {
         return treeHasher;
     }
 

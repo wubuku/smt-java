@@ -2,102 +2,62 @@ package org.starcoin.smt;
 
 import java.util.Arrays;
 
-public class TreeHasher {
+public class TreeHasher extends AbstractTreeHasher {
     private static final byte[] LEAF_PREFIX = new byte[]{0};
     private static final byte[] NODE_PREFIX = new byte[]{1};
 
-    private final Hasher hasher;
-    private final Bytes zeroValue;
-
     public TreeHasher(Hasher hasher) {
+        super(hasher);
         if (hasher == null)
             throw new IllegalArgumentException();
-        this.hasher = hasher;
-        byte[] z = new byte[this.hasher.size()];
-        //Arrays.fill(z, (byte) 0);
-        this.zeroValue = new Bytes(z);
     }
 
-    public Bytes digest(Bytes data) {
-        return this.hasher.hash(data);
-    }
-
+    @Override
     public Bytes path(Bytes key) {
         return this.digest(key);
     }
 
+    @Override
     public Pair<Bytes, Bytes> digestLeaf(Bytes path, Bytes leafData) {
         Bytes value = new Bytes(ByteUtils.concat(LEAF_PREFIX, path.getValue(), leafData.getValue()));
         Bytes sum = this.hasher.hash(value);
         return new Pair<>(sum, value);
     }
 
+    @Override
     public Pair<Bytes, Bytes> parseLeaf(Bytes data) {
         byte[] p = Arrays.copyOfRange(data.getValue(), LEAF_PREFIX.length, LEAF_PREFIX.length + this.pathSize());
         byte[] v = Arrays.copyOfRange(data.getValue(), LEAF_PREFIX.length + this.pathSize(), data.getValue().length);
         return new Pair<>(new Bytes(p), new Bytes(v));
     }
 
+    @Override
     public boolean isLeaf(Bytes data) {
         return new Bytes(Arrays.copyOfRange(data.getValue(), 0, LEAF_PREFIX.length)).equals(new Bytes(LEAF_PREFIX));
     }
 
+    @Override
     public Pair<Bytes, Bytes> digestNode(Bytes leftData, Bytes rightData) {
         Bytes value = new Bytes(ByteUtils.concat(NODE_PREFIX, leftData.getValue(), rightData.getValue()));
         Bytes sum = this.hasher.hash(value);
         return new Pair<>(sum, value);
     }
 
+    @Override
     public Pair<Bytes, Bytes> parseNode(Bytes data) {
         byte[] p = Arrays.copyOfRange(data.getValue(), NODE_PREFIX.length, NODE_PREFIX.length + this.pathSize());
         byte[] v = Arrays.copyOfRange(data.getValue(), NODE_PREFIX.length + this.pathSize(), data.getValue().length);
         return new Pair<>(new Bytes(p), new Bytes(v));
     }
 
-    public boolean isKeyRelatedWithLeafData(Bytes key, Bytes leafData) {
-        return !isKeyUnrelatedWithLeafData(key, leafData);
-    }
-
-    public boolean isKeyUnrelatedWithLeafData(Bytes key, Bytes leafData) {
-        if (leafData == null || leafData.getValue().length == 0) {
-            return true;
-        }
-        Bytes path = this.path(key);
-        return isPathUnrelatedWithLeafData(path, leafData);
-    }
-
-    public boolean isPathUnrelatedWithLeafData(Bytes path, Bytes leafData) {
-        boolean unrelated = false;
-        if (leafData == null || leafData.getValue().length == 0) {
-            unrelated = true;
-        } else {
-            Pair<Bytes, Bytes> p = parseLeaf(leafData);
-
-            if (!Bytes.equals(p.getItem1(), path)) {
-                unrelated = true;
-            }
-        }
-        return unrelated;
-    }
-
-    public int pathSize() {
-        return this.hasher.size();
-    }
-
+    @Override
     public Bytes placeholder() {
         return this.zeroValue;
     }
 
+    @Override
     public int leafDataSize() {
         return LEAF_PREFIX.length + pathSize() + this.hasher.size();
-    }
-
-    public Hasher getHasher() {
-        return hasher;
-    }
-
-    public int hasherSize() {
-        return this.hasher.size();
     }
 
 }

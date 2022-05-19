@@ -59,7 +59,11 @@ public class SparseCompactMerkleProof {
      * @return
      */
     public static SparseCompactMerkleProof compactProof(SparseMerkleProof proof, Hasher hasher) {
-        TreeHasher th = new TreeHasher(hasher);
+        AbstractTreeHasher th = new TreeHasher(hasher);
+        return compactProof(proof, th);
+    }
+
+    public static SparseCompactMerkleProof compactProof(SparseMerkleProof proof, AbstractTreeHasher th) {
         if (!proof.sanityCheck(th)) {
             throw new IllegalArgumentException("proof sanityCheck failed.");
         }
@@ -81,8 +85,11 @@ public class SparseCompactMerkleProof {
 
 
     public static SparseMerkleProof decompactProof(SparseCompactMerkleProof proof, Hasher hasher) {
-        TreeHasher th = new TreeHasher(hasher);
+        AbstractTreeHasher th = new TreeHasher(hasher);
+        return decompactProof(proof, th);
+    }
 
+    public static SparseMerkleProof decompactProof(SparseCompactMerkleProof proof, AbstractTreeHasher th) {
         if (!proof.sanityCheck(th)) {
             throw new IllegalArgumentException("proof sanityCheck failed.");
         }
@@ -101,7 +108,7 @@ public class SparseCompactMerkleProof {
         return new SparseMerkleProof(decompactedSideNodes, proof.nonMembershipLeafData, proof.siblingData);
     }
 
-    public boolean sanityCheck(TreeHasher th) {
+    public boolean sanityCheck(AbstractTreeHasher th) {
         // Do a basic sanity check on the proof on the fields of the proof specific to
         // the compact proof only.
         //

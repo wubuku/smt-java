@@ -1,6 +1,8 @@
 package org.starcoin.smt;
 
 public final class Bytes implements Comparable<Bytes> {
+    public static Bytes EMPTY = new Bytes(new byte[0]);
+
     private final byte[] value;
 
     public Bytes(byte[] value) {

@@ -1,11 +1,20 @@
 package org.starcoin.smt;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HexUtils {
 
     public static byte hexToByte(String h) {
         return (byte) Integer.parseInt(h, 16);
+    }
+
+    public static byte[][] hexArrayToByteArrays(String[] hs) {
+        List<byte[]> bytesList = new ArrayList<>(hs.length);
+        for (String h : hs) {
+            bytesList.add(hexToByteArray(h));
+        }
+        return bytesList.toArray(new byte[0][]);
     }
 
     public static byte[] hexToByteArray(String h) {

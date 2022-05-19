@@ -42,27 +42,27 @@ public class SparseMerkleProof {
         this.siblingData = siblingData;
     }
 
-    public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
+    public static Bytes updateRoot(AbstractTreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
         return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, new Bytes(oldLeafData));
     }
 
-    public static Bytes updateRoot(TreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
+    public static Bytes updateRoot(AbstractTreeHasher th, byte[] key, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRoot(th, new Bytes(key), new Bytes(value), sideNodes, oldLeafData);
     }
 
-    public static Bytes updateRoot(TreeHasher th, Bytes key, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
+    public static Bytes updateRoot(AbstractTreeHasher th, Bytes key, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRootByPath(th, th.path(key), value, sideNodes, oldLeafData);
     }
 
-    public static Bytes updateRootByPath(TreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
+    public static Bytes updateRootByPath(AbstractTreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, byte[] oldLeafData) {
         return updateRootByPath(th, new Bytes(path), new Bytes(value), sideNodes, new Bytes(oldLeafData));
     }
 
-    public static Bytes updateRootByPath(TreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
+    public static Bytes updateRootByPath(AbstractTreeHasher th, byte[] path, byte[] value, Bytes[] sideNodes, Bytes oldLeafData) {
         return updateRootByPath(th, new Bytes(path), new Bytes(value), sideNodes, oldLeafData);
     }
 
-    public static Bytes updateRootByPath(TreeHasher th, Bytes path, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
+    public static Bytes updateRootByPath(AbstractTreeHasher th, Bytes path, Bytes value, Bytes[] sideNodes, Bytes oldLeafData) {
         Bytes pathNode0;      //pathNodes[0]
         if (oldLeafData == null || oldLeafData.getValue().length == 0) {
             pathNode0 = th.placeholder();
@@ -176,8 +176,20 @@ public class SparseMerkleProof {
         return verifyProofWithUpdates(proof, root, key, value, hasher).getItem1();
     }
 
+    public static boolean verifyProof(SparseMerkleProof proof, Bytes root, byte[] key, byte[] value, AbstractTreeHasher th) {
+        return verifyProofWithUpdates(proof, root, new Bytes(key), new Bytes(value), th).getItem1();
+    }
+
+    public static boolean verifyProof(SparseMerkleProof proof, Bytes root, Bytes key, Bytes value, AbstractTreeHasher th) {
+        return verifyProofWithUpdates(proof, root, key, value, th).getItem1();
+    }
+
     private static Pair<Boolean, List<Pair<Bytes, Bytes>>> verifyProofWithUpdates(SparseMerkleProof proof, Bytes root, Bytes key, Bytes value, Hasher hasher) {
-        TreeHasher th = new TreeHasher(hasher);
+        AbstractTreeHasher th = new TreeHasher(hasher);
+        return verifyProofWithUpdates(proof, root, key, value, th);
+    }
+
+    private static Pair<Boolean, List<Pair<Bytes, Bytes>>> verifyProofWithUpdates(SparseMerkleProof proof, Bytes root, Bytes key, Bytes value, AbstractTreeHasher th) {
         Bytes path = th.path(key);
         if (!proof.sanityCheck(th)) {
             return new Pair<>(false, null);
@@ -232,6 +244,24 @@ public class SparseMerkleProof {
         return new Pair<>(Bytes.equals(currentHash, root), updates);
     }
 
+    public static Bytes computeRootByPathAndValueHash(Bytes[] sideNodes, Bytes path, Bytes valueHash, AbstractTreeHasher th) {
+        Pair<Bytes, Bytes> p = th.digestLeaf(path, valueHash);
+        Bytes currentHash = p.getItem1();
+        //Bytes currentData = p.getItem2();
+        for (int i = 0; i < sideNodes.length; i++) {
+            //byte[] node = new byte[th.pathSize()];
+            Bytes node = new Bytes(Arrays.copyOf(sideNodes[i].getValue(), th.pathSize()));
+            if (ByteUtils.getBitAtFromMSB(path.getValue(), sideNodes.length - 1 - i) == RIGHT) {
+                p = th.digestNode(node, currentHash);
+            } else {
+                p = th.digestNode(currentHash, node);
+            }
+            currentHash = p.getItem1();
+            //currentData = p.getItem2();
+        }
+        return currentHash;
+    }
+
     public Bytes[] getSideNodes() {
         return sideNodes;
     }
@@ -264,7 +294,7 @@ public class SparseMerkleProof {
      * @param th TreeHasher
      * @return
      */
-    public boolean sanityCheck(TreeHasher th) {
+    public boolean sanityCheck(AbstractTreeHasher th) {
         // Check that the number of supplied sidenodes does not exceed the maximum possible.
         if (this.sideNodes.length > th.pathSize() * 8 ||
                 // Check that leaf data for non-membership proofs is the correct size.
