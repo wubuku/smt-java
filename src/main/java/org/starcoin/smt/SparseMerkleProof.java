@@ -204,7 +204,8 @@ public class SparseMerkleProof {
         Bytes currentHash;
         Bytes currentData;
         if (value == null || Bytes.equals(value, DEFAULT_VALUE)) { // Non-membership proof.
-            if (proof.nonMembershipLeafData == null) { // Leaf is a placeholder value.
+            if (proof.nonMembershipLeafData == null || Bytes.equals(proof.nonMembershipLeafData, DEFAULT_VALUE)) {
+                // Leaf is a placeholder value.
                 currentHash = th.placeholder();
             } else { // Leaf is an unrelated leaf.
                 Pair<Bytes, Bytes> p = th.parseLeaf(proof.nonMembershipLeafData);
